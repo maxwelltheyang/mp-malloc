@@ -160,25 +160,19 @@ void *malloc(size_t size) {
   metadata_t* temp = head;
   while (temp != NULL) {
     if (temp->size >= size && temp->isUsed == 0) { //second statement is a failsafe
-      //printf("should not exec\n");
       int diff = temp->size - size - sizeof(metadata_t);
-      //printf("%d\n", diff);
       if (diff > 1) {
         temp->size = size;
         temp->isUsed = 1;
-        //void* new_loc = (void*)((char*)temp + sizeof(metadata_t) + size);
         metadata_t* new_space = (metadata_t *)((char *)(temp) + sizeof(metadata_t) + size);
         new_space->size = diff;
         new_space->isUsed = 0;
         insert_block(new_space);
-        // combine(new_space);
       }
       temp->isUsed = 1;
-      //temp->size = size;
       delete_block(temp);
       return (void*)((char*)temp + sizeof(metadata_t));
     }
-    //printf("stuck :p\n");
     temp = temp->next;
   }
   metadata_t* new_data = sbrk(sizeof(metadata_t) + size);
