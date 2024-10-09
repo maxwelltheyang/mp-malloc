@@ -20,7 +20,6 @@ metadata_t* head = NULL;
 
 void print_heap() {
   metadata_t *curMeta = startOfHeap;
-  //void *endOfHeap = sbrk(0);
   printf("-- Start of Heap (%p) --\n", startOfHeap);
   while ((void *)curMeta < endOfHeap && curMeta) {   // While we're before the end of the heap...
     printf("metadata for memory %p: (%p, size=%d, isUsed=%d)\n", 
@@ -35,7 +34,6 @@ void print_heap() {
 }
 
 void delete_block(metadata_t* data) {
-  //printf("deleting\n");
   if (!data || !head) {return;}
   if (data == head) {
     head = data->next;
@@ -51,7 +49,6 @@ void delete_block(metadata_t* data) {
 }
 
 void insert_block(metadata_t* data) {
-  //printf("inserting\n");
   if (!data) {return;}
   metadata_t* temp = head;
   metadata_t* prev_temp = NULL;
@@ -62,13 +59,8 @@ void insert_block(metadata_t* data) {
     return;
   }
   while (temp != NULL && (temp < data)) {
-    //printf("Current temp: %p, temp->next: %p\n", (void*)temp, (void*)(temp->next));
-    //printf("End of heap: %p\n", (metadata_t*)((void *)temp + temp->size));
     prev_temp = temp;
     temp = temp->next;
-    // if (temp == prev_temp) {
-    //   break;
-    // }
   }
   if (temp == head) {
     data->next = head;
@@ -83,17 +75,12 @@ void insert_block(metadata_t* data) {
       temp->prev = data;
     }
   }
-  //print_heap();
 }
 
 void combine_block(metadata_t* meta) {
-  //printf("comb\n");
   if (!meta) {return;}
   metadata_t* next = meta->next;
-  //metadata_t* ptr = (metadata_t*)((void*)meta + meta->size + sizeof(metadata_t));
   if (next != NULL && next->isUsed == 0 && (metadata_t*)((char*)meta + meta->size + sizeof(metadata_t)) == next) {
-    //printf("metasize: %u\n", meta->size);
-    //printf("next size: %u\n", next->size);
     meta->size = meta->size + next->size + sizeof(metadata_t);
     meta->next = next->next;
     if (next->next != NULL) {
@@ -103,10 +90,7 @@ void combine_block(metadata_t* meta) {
   }
 
   metadata_t* prev = meta->prev;
-  //metadata_t* ptr_prev = (metadata_t*)((void*)prev + prev->size + sizeof(metadata_t));
   if (prev != NULL && prev->isUsed == 0 && (metadata_t*)((char*)prev + prev->size + sizeof(metadata_t)) == meta) {
-    //printf("metasize: %u\n", meta->size);
-    //printf("prev size: %u\n", prev->size);
     prev->size = prev->size + meta->size + sizeof(metadata_t);
     prev->next = meta->next;
     if (meta->next != NULL) {
@@ -139,7 +123,6 @@ void combine_block(metadata_t* meta) {
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/calloc/
  */
 void *calloc(size_t num, size_t size) {
-  // implement calloc:
   if (num == 0 || size == 0) {
     return NULL;
   }
@@ -200,22 +183,14 @@ void *malloc(size_t size) {
   }
   metadata_t* new_data = sbrk(sizeof(metadata_t) + size);
   if (new_data == (void *)-1) {
-    //printf("failure\n");
     return NULL;
   }
-  //printf("deref\n");
   new_data->size = size;
   new_data->isUsed = 1;
   if (startOfHeap == NULL) {
     startOfHeap = new_data;
   }
   endOfHeap = sbrk(0);
-  //printf("the next\n");
-  //++counter;
-  // printf("new_data: %p\n", new_data);
-  // printf("new data size: %d\n", new_data->size);
-  // printf("data pointer: %p\n", (void*)(new_data + 1));
-  // print_heap();
   return (void*)((char*)new_data + sizeof(metadata_t));
 }
 
@@ -237,16 +212,13 @@ void *malloc(size_t size) {
  *    passed as argument, no action occurs.
  */
 void free(void *ptr) {
-  //printf("i am being freed!\n");
   if (ptr == NULL) {
-    //printf("nullvalue\n");
     return;
   }
   metadata_t *meta = (metadata_t *)((char *)ptr - sizeof(metadata_t));
   meta->isUsed = 0;
   insert_block(meta);
   combine_block(meta);
-  //printf("done2\n");
 }
 
 
@@ -296,7 +268,6 @@ void free(void *ptr) {
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/realloc/
  */
 void *realloc(void *ptr, size_t size) {
-  // implement realloc:
   if (ptr == NULL) {
     return malloc(size);
   }
@@ -304,16 +275,13 @@ void *realloc(void *ptr, size_t size) {
     free(ptr);
     return NULL;
   }
-  //printf("reached !\n");
   metadata_t* curr = (metadata_t *)((char*)ptr - sizeof(metadata_t));
   size_t data_size = curr->size;
-  //int diff = curr->size - size;
   if (size <= data_size) {
     return ptr;
   } 
   else {
     void* new_loc = malloc(size);
-    //printf("called in realloc\n");
     if (new_loc == NULL) {
       return NULL;
     }
